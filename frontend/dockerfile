@@ -1,0 +1,31 @@
+FROM node:20-alpine as builder
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+RUN ls -la /app
+RUN npm run build
+
+
+FROM nginx:alpine as runner
+
+RUN rm /usr/share/nginx/html/*
+COPY --from=builder --chown=nginx:nginx /app/build /usr/share/nginx/html
+
+RUN apk add --no-cache libcap \
+    && setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
+    && apk del libcap \
+    && chown -R nginx:nginx /var/cache/nginx /var/log/nginx /etc/nginx/conf.d \
+    && touch /var/run/nginx.pid \
+    && chown -R nginx:nginx /var/run/nginx.pid
+
+USER nginx
+EXPOSE 80
+
+HEALTHCHECK --interval=30s --retries=3 --timeout=3s \
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:80/healthz || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]

@@ -36,5 +36,36 @@ services:
       timeout: 3s
       retries: 3
 
+  order-service:
+    container_name: microshop_order_service
+    build: ./order-service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    networks:
+      - microshop-net
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8000/healthz"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+
+  frontend:
+    container_name: microshop-frontend
+    build: ./frontend
+    ports:
+      - "80:80"
+    networks:
+      - microshop-net
+    restart: unless-stopped
+    depends_on:
+      - order-service
+      - redis
+      - catalog-service
+    healthcheck:
+      timeout: 3s
+      retries: 3
+      interval: 30s
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:80/"]
 
 
