@@ -1,0 +1,40 @@
+networks:
+  microshop-net:
+    driver: bridge
+
+volumes:
+  microshop_volume:
+
+services:
+  redis:
+    container_name: micorshop_redis
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - microshop_volume:/data
+    restart: unless-stopped
+    networks:
+      - microshop-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  catalog-service:
+    container_name: micorshop_catalog
+    build: ./catalog-service
+    ports:
+      - "3000:3000"
+    networks:
+      - microshop-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/healthz"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+
+

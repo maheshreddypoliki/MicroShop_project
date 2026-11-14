@@ -1,0 +1,18 @@
+FROM python:3.11-slim
+
+RUN groupadd --uid 10001 appgroup \
+    && useradd --uid 10001 --gid appgroup -m appuser
+
+COPY --chown=appuser:appgroup ./requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY --chown=appuser:appgroup ./main.py ./
+
+USER appuser
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+ CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:8000/healthz || exit 1
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
