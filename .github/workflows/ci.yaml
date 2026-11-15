@@ -12,13 +12,13 @@ on:
 
 jobs:
   lint-and-validate:
-   name: lint and validate
-   runs_on: ubuntu-latest
+    name: lint and validate
+    runs-on: ubuntu-latest
     steps:
       - name: checkout code
         uses: actions/checkout@v4
       - name: lint dockerfiles with hadolint
-        user: hadolint/hadolint-action@v3.1.0
+        uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfiles: |
             ./catalog-service/dockerfile
@@ -27,8 +27,8 @@ jobs:
 
   
   security-scanning:
-    name: tyivy security scanning for filesystem and dependencies
-    runs_on: ubuntu_latest
+    name: trivy security scanning for filesystem and dependencies
+    runs-on: ubuntu_latest
     steps:
       - name: checkout code
         uses: actions/checkout@v4
@@ -40,17 +40,17 @@ jobs:
           security-checks: vuln,config
           exit-code: 0
         
-  build-and-smaoke-test:
+  build-and-smoke-test:
     name: build and smoke test
-    depends_on: [lint-and-validate]
-    runs_on: ububtu-latest
+    needs: [lint-and-validate]
+    runs-on: ubuntu-latest
     steps:
       - name: checkout code
         uses: actions/checkout@v4
       - name: setup docker buildx
         uses: docker/setup-buildx-action@v3
       - name: build and spin up stack via docker compose
-        run |
+        run: |
           docker compose up --build -d
       - name: verify containers helath status
         run: |
