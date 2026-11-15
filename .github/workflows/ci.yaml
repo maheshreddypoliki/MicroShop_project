@@ -20,10 +20,10 @@ jobs:
       - name: lint dockerfiles with hadolint
         uses: hadolint/hadolint-action@v3.1.0
         with:
-          dockerfiles: |
-            ./catalog-service/dockerfile
-            ./order-service/dockerfile
-            ./frontend/dockerfile
+          dockerfile: |
+            catalog-service/dockerfile
+            order-service/dockerfile
+            frontend/dockerfile
 
   
   security-scanning:
