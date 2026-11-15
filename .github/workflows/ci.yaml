@@ -17,18 +17,24 @@ jobs:
     steps:
       - name: checkout code
         uses: actions/checkout@v4
-      - name: lint dockerfiles with hadolint
+      - name: lint catalog-service dockerfile
         uses: hadolint/hadolint-action@v3.1.0
         with:
-          dockerfile: |
-            catalog-service/dockerfile
-            order-service/dockerfile
-            frontend/dockerfile
+          dockerfile: catalog-service/dockerfile
 
-  
+      - name: lint order-service dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: order-service/dockerfile
+          
+      - name: lint frontend dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: frontend/dockerfile
+
   security-scanning:
     name: trivy security scanning for filesystem and dependencies
-    runs-on: ubuntu_latest
+    runs-on: ubuntu-latest
     steps:
       - name: checkout code
         uses: actions/checkout@v4
