@@ -1,0 +1,72 @@
+name: microshop-ci-workflow
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  lint-and-validate:
+   name: lint and validate
+    runs_on: ubuntu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+      - name: lint dockerfiles with hadolint
+        user: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfiles: |
+            ./catalog-service/dockerfile
+            ./order-service/dockerfile
+            ./frontend/dockerfile
+
+  
+  security-scanning:
+    name: tyivy security scanning for filesystem and dependencies
+    runs_on: ubuntu_latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+      - name: trivy filesystem scanning
+        uses: aquasecurity/trivy-action@v0.18.0
+        with:
+          scan-type: fs
+          severity: CRITICAL,HIGH,MEDIUM
+          security-checks: vuln,config
+          exit-code: 0
+        
+  build-and-smaoke-test:
+    name: build and smoke test
+    depends_on: [lint-and-validate]
+    runs_on: ububtu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+      - name: setup docker buildx
+        uses: docker/setup-buildx-action@v3
+      - name: build and spin up stack via docker compose
+        run |
+          docker compose up --build -d
+      - name: verify containers helath status
+        run: |
+          echo "waiting for the containers to initialize and pass the healthchecks"
+          sleep 15
+
+          echo "checking catalog-service"
+          curl -f http://localhost:3000/healthz || exit 1
+
+          echo "checking order-service"
+          curl -f http://localhost:8000/healthz || exit 1
+
+          echo "checking frontend"
+          curl -f http://localhost:80/ || exit 1
+
+      - name: tear down stack
+        if: always()
+        run: |
+          docker compose down -v
